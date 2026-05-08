@@ -68,19 +68,14 @@ function Index() {
           <div className="relative">
             <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
               <div
-                className="flex flex-col items-center justify-center rounded-2xl px-6 py-10 text-center"
+                className="overflow-hidden rounded-2xl"
                 style={{ background: "oklch(0.96 0.04 80)" }}
               >
-                <p className="font-display text-5xl font-bold tracking-tight" style={{ color: "oklch(0.55 0.21 28)" }}>
-                  DRUMSTICK
-                </p>
-                <p className="mt-1 text-sm italic text-muted-foreground">"don't wing it."</p>
-                <div className="my-6 grid h-32 w-32 place-items-center rounded-full bg-background text-6xl shadow-soft">
-                  🐔
-                </div>
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                  Powered by Cluck AI
-                </p>
+                <img
+                  src={drumstickImg}
+                  alt="Drumstick the chicken — don't wing it."
+                  className="h-auto w-full object-contain"
+                />
               </div>
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
                 <Stat label="GPA" value={(avg / 25).toFixed(2)} />
