@@ -43,6 +43,9 @@ function Index() {
               Study calmer. <br />
               <span className="text-brand">Crush more.</span>
             </h1>
+            <p className="mt-3 -rotate-2 font-script text-3xl text-brand sm:text-4xl">
+              Don't wing it.
+            </p>
             <p className="mt-6 max-w-xl text-lg text-muted-foreground">
               Cluck pulls your assignments, tests, and grades into one quiet
               place — then nudges you with a friendly AI sidekick when it's time
