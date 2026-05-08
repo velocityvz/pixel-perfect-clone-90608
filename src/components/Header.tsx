@@ -4,7 +4,7 @@ import chickenLogo from "../assets/chicken-logo.png";
 const links = [
   { to: "/", label: "Home" },
   { to: "/calendar", label: "Calendar" },
-  { to: "/cluck", label: "AI" },
+  { to: "/drumstick", label: "AI" },
   { to: "/grades", label: "Grades" },
 ] as const;
 
