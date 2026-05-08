@@ -64,25 +64,21 @@ function Index() {
             </div>
           </div>
 
-          {/* Mascot card */}
+          {/* Stats */}
           <div className="relative">
-            <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
-              <div
-                className="grid place-items-center overflow-hidden rounded-2xl p-6"
-                style={{ background: "oklch(0.96 0.04 80)" }}
-              >
-                <img
-                  src={chickenLogo}
-                  alt="Drumstick mascot"
-                  width={320}
-                  height={320}
-                  className="h-64 w-auto object-contain"
-                />
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <Stat label="GPA" value={(avg / 25).toFixed(2)} />
-                <Stat label="Due soon" value={String(upcoming.length)} />
-                <Stat label="Classes" value={String(courses.length)} />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -inset-4 -z-10 rounded-[2rem] opacity-60 blur-2xl"
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(0.9 0.08 28 / 0.5), oklch(0.92 0.07 80 / 0.4))",
+              }}
+            />
+            <div className="grid gap-4">
+              <StatCard label="GPA" value={(avg / 25).toFixed(2)} hint="Weighted avg" accent="oklch(0.7 0.16 28)" />
+              <div className="grid grid-cols-2 gap-4">
+                <StatCard label="Due soon" value={String(upcoming.length)} hint="This week" accent="oklch(0.75 0.14 80)" />
+                <StatCard label="Classes" value={String(courses.length)} hint="Enrolled" accent="oklch(0.7 0.12 200)" />
               </div>
             </div>
           </div>
@@ -136,11 +132,22 @@ function Index() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value, hint, accent }: { label: string; value: string; hint: string; accent: string }) {
   return (
-    <div className="rounded-xl bg-muted px-3 py-3">
-      <p className="font-display text-2xl font-semibold">{value}</p>
-      <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
+    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card/80 p-6 shadow-card backdrop-blur transition-transform hover:-translate-y-1">
+      <div
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-1"
+        style={{ background: accent }}
+      />
+      <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+      <p className="mt-2 font-display text-5xl font-semibold leading-none tracking-tight">{value}</p>
+      <p className="mt-3 text-xs text-muted-foreground">{hint}</p>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-10 -right-10 h-28 w-28 rounded-full opacity-20 blur-2xl transition-opacity group-hover:opacity-40"
+        style={{ background: accent }}
+      />
     </div>
   );
 }
