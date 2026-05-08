@@ -1,9 +1,10 @@
 import { Link } from "@tanstack/react-router";
+import chickenLogo from "../assets/chicken-logo.png";
 
 const links = [
   { to: "/", label: "Home" },
   { to: "/calendar", label: "Calendar" },
-  { to: "/cluck", label: "Cluck" },
+  { to: "/cluck", label: "AI" },
   { to: "/grades", label: "Grades" },
 ] as const;
 
@@ -11,12 +12,16 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-brand text-brand-foreground font-display text-lg font-bold">
-            C
-          </span>
-          <span className="font-display text-xl font-semibold tracking-tight">
-            Cluck<span className="text-brand">.</span>
+        <Link to="/" className="flex items-center gap-2.5">
+          <img
+            src={chickenLogo}
+            alt="Drumstick mascot"
+            width={40}
+            height={40}
+            className="h-10 w-10 object-contain"
+          />
+          <span className="font-display text-2xl tracking-tight leading-none">
+            Drumstick<span className="text-brand">.</span>
           </span>
         </Link>
         <nav className="flex items-center gap-1 rounded-full border border-border/60 bg-card/60 p-1 shadow-soft">
