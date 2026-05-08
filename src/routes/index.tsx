@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { assignments, courses } from "../data/mock";
-import chickenLogo from "../assets/chicken-logo.png";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
