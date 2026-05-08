@@ -68,13 +68,15 @@ function Index() {
           <div className="relative">
             <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
               <div
-                className="overflow-hidden rounded-2xl"
+                className="grid place-items-center overflow-hidden rounded-2xl p-6"
                 style={{ background: "oklch(0.96 0.04 80)" }}
               >
                 <img
-                  src={drumstickImg}
-                  alt="Drumstick the chicken — don't wing it."
-                  className="h-auto w-full object-contain"
+                  src={chickenLogo}
+                  alt="Drumstick mascot"
+                  width={320}
+                  height={320}
+                  className="h-64 w-auto object-contain"
                 />
               </div>
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
