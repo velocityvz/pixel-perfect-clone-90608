@@ -10,7 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as GradesRouteImport } from './routes/grades'
-import { Route as CluckRouteImport } from './routes/cluck'
+import { Route as DrumstickRouteImport } from './routes/drumstick'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -19,9 +19,9 @@ const GradesRoute = GradesRouteImport.update({
   path: '/grades',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CluckRoute = CluckRouteImport.update({
-  id: '/cluck',
-  path: '/cluck',
+const DrumstickRoute = DrumstickRouteImport.update({
+  id: '/drumstick',
+  path: '/drumstick',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CalendarRoute = CalendarRouteImport.update({
@@ -38,34 +38,34 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
-  '/cluck': typeof CluckRoute
+  '/drumstick': typeof DrumstickRoute
   '/grades': typeof GradesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
-  '/cluck': typeof CluckRoute
+  '/drumstick': typeof DrumstickRoute
   '/grades': typeof GradesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
-  '/cluck': typeof CluckRoute
+  '/drumstick': typeof DrumstickRoute
   '/grades': typeof GradesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/calendar' | '/cluck' | '/grades'
+  fullPaths: '/' | '/calendar' | '/drumstick' | '/grades'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/calendar' | '/cluck' | '/grades'
-  id: '__root__' | '/' | '/calendar' | '/cluck' | '/grades'
+  to: '/' | '/calendar' | '/drumstick' | '/grades'
+  id: '__root__' | '/' | '/calendar' | '/drumstick' | '/grades'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CalendarRoute: typeof CalendarRoute
-  CluckRoute: typeof CluckRoute
+  DrumstickRoute: typeof DrumstickRoute
   GradesRoute: typeof GradesRoute
 }
 
@@ -78,11 +78,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GradesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/cluck': {
-      id: '/cluck'
-      path: '/cluck'
-      fullPath: '/cluck'
-      preLoaderRoute: typeof CluckRouteImport
+    '/drumstick': {
+      id: '/drumstick'
+      path: '/drumstick'
+      fullPath: '/drumstick'
+      preLoaderRoute: typeof DrumstickRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/calendar': {
@@ -105,9 +105,18 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CalendarRoute: CalendarRoute,
-  CluckRoute: CluckRoute,
+  DrumstickRoute: DrumstickRoute,
   GradesRoute: GradesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
