@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import { starterMessages, suggestedPrompts } from "../data/mock";
 
-export const Route = createFileRoute("/cluck")({
+export const Route = createFileRoute("/drumstick")({
   head: () => ({
     meta: [
       { title: "Cluck AI — Your study sidekick" },

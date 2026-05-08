@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { assignments, courses } from "../data/mock";
-import drumstickImg from "../assets/drumstick.png";
+import chickenLogo from "../assets/chicken-logo.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -50,7 +50,7 @@ function Index() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                to="/cluck"
+                to="/drumstick"
                 className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-soft transition-transform hover:-translate-y-0.5"
               >
                 Talk to Cluck →
@@ -68,13 +68,15 @@ function Index() {
           <div className="relative">
             <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
               <div
-                className="overflow-hidden rounded-2xl"
+                className="grid place-items-center overflow-hidden rounded-2xl p-6"
                 style={{ background: "oklch(0.96 0.04 80)" }}
               >
                 <img
-                  src={drumstickImg}
-                  alt="Drumstick the chicken — don't wing it."
-                  className="h-auto w-full object-contain"
+                  src={chickenLogo}
+                  alt="Drumstick mascot"
+                  width={320}
+                  height={320}
+                  className="h-64 w-auto object-contain"
                 />
               </div>
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
