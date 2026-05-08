@@ -50,9 +50,9 @@ export function Footer() {
     <footer className="mt-24 border-t border-border/60 py-10">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 text-sm text-muted-foreground sm:flex-row">
         <p>
-          <span className="font-display text-base text-foreground">Cluck</span> — a calmer way to study.
+          <span className="font-display text-base text-foreground">Drumstick</span> — a calmer way to study.
         </p>
-        <p>© {new Date().getFullYear()} Cluck AI. Mock UI.</p>
+        <p>© {new Date().getFullYear()} Drumstick. Mock UI.</p>
       </div>
     </footer>
   );
