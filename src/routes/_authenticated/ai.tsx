@@ -9,8 +9,8 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/ai")({
   head: () => ({
     meta: [
-      { title: "AI — Drumstick" },
-      { name: "description", content: "Chat with Drumstick — your AI study sidekick." },
+      { title: "AI — Cluck" },
+      { name: "description", content: "Chat with Cluck — your AI study sidekick." },
     ],
   }),
   component: AIPage,
