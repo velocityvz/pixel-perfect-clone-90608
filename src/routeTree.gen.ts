@@ -9,89 +9,58 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as GradesRouteImport } from './routes/grades'
-import { Route as DrumstickRouteImport } from './routes/drumstick'
-import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedGradesRouteImport } from './routes/_authenticated/grades'
+import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 
-const GradesRoute = GradesRouteImport.update({
-  id: '/grades',
-  path: '/grades',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DrumstickRoute = DrumstickRouteImport.update({
-  id: '/drumstick',
-  path: '/drumstick',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CalendarRoute = CalendarRouteImport.update({
-  id: '/calendar',
-  path: '/calendar',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedGradesRoute = AuthenticatedGradesRouteImport.update({
+  id: '/_authenticated/grades',
+  path: '/grades',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
+  id: '/_authenticated/calendar',
+  path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/calendar': typeof CalendarRoute
-  '/drumstick': typeof DrumstickRoute
-  '/grades': typeof GradesRoute
+  '/calendar': typeof AuthenticatedCalendarRoute
+  '/grades': typeof AuthenticatedGradesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/calendar': typeof CalendarRoute
-  '/drumstick': typeof DrumstickRoute
-  '/grades': typeof GradesRoute
+  '/calendar': typeof AuthenticatedCalendarRoute
+  '/grades': typeof AuthenticatedGradesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/calendar': typeof CalendarRoute
-  '/drumstick': typeof DrumstickRoute
-  '/grades': typeof GradesRoute
+  '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
+  '/_authenticated/grades': typeof AuthenticatedGradesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/calendar' | '/drumstick' | '/grades'
+  fullPaths: '/' | '/calendar' | '/grades'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/calendar' | '/drumstick' | '/grades'
-  id: '__root__' | '/' | '/calendar' | '/drumstick' | '/grades'
+  to: '/' | '/calendar' | '/grades'
+  id: '__root__' | '/' | '/_authenticated/calendar' | '/_authenticated/grades'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  CalendarRoute: typeof CalendarRoute
-  DrumstickRoute: typeof DrumstickRoute
-  GradesRoute: typeof GradesRoute
+  AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
+  AuthenticatedGradesRoute: typeof AuthenticatedGradesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/grades': {
-      id: '/grades'
-      path: '/grades'
-      fullPath: '/grades'
-      preLoaderRoute: typeof GradesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/drumstick': {
-      id: '/drumstick'
-      path: '/drumstick'
-      fullPath: '/drumstick'
-      preLoaderRoute: typeof DrumstickRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/calendar': {
-      id: '/calendar'
-      path: '/calendar'
-      fullPath: '/calendar'
-      preLoaderRoute: typeof CalendarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -99,14 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/grades': {
+      id: '/_authenticated/grades'
+      path: '/grades'
+      fullPath: '/grades'
+      preLoaderRoute: typeof AuthenticatedGradesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/calendar': {
+      id: '/_authenticated/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AuthenticatedCalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  CalendarRoute: CalendarRoute,
-  DrumstickRoute: DrumstickRoute,
-  GradesRoute: GradesRoute,
+  AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
+  AuthenticatedGradesRoute: AuthenticatedGradesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
