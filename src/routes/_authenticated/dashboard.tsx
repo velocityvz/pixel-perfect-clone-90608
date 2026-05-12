@@ -141,7 +141,7 @@ function Dashboard() {
             <Sparkles className="h-5 w-5 text-brand" />
             <h3 className="mt-3 font-display text-xl font-semibold">Need a hand?</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Ask Drumstick to summarize a chapter, plan tonight's study session, or quiz you.
+              Ask Cluck to summarize a chapter, plan tonight's study session, or quiz you.
             </p>
             <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-brand">
               Open chat <ArrowRight className="h-3.5 w-3.5" />
