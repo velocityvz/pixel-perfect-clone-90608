@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { assignments, courseColor } from "../data/mock";
+import { assignments, courseColor } from "../../data/mock";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({

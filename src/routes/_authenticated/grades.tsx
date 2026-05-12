@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { courses, courseColor } from "../data/mock";
+import { courses, courseColor } from "../../data/mock";
 
 export const Route = createFileRoute("/_authenticated/grades")({
   head: () => ({
