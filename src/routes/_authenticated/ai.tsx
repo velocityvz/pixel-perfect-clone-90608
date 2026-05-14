@@ -91,7 +91,8 @@ function InlineCode({ children }: { children: React.ReactNode }) {
   const handle = async () => {
     const ok = await copyToClipboard(text);
     setState(ok ? "copied" : "error");
-    if (!ok) toast.error("Couldn't copy to clipboard");
+    if (ok) toast.success("Copied to clipboard");
+    else toast.error("Couldn't copy to clipboard");
     setTimeout(() => setState("idle"), 1200);
   };
   return (
