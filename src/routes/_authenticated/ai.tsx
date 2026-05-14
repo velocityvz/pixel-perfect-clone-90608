@@ -33,35 +33,87 @@ function buildContext() {
   return `UPCOMING ASSIGNMENTS:\n${upcoming}\n\nCOURSES & GRADES:\n${grades}`;
 }
 
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+type CopyState = "idle" | "copied" | "error";
+
+function InlineCode({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<CopyState>("idle");
+  const text = String(children);
+  const handle = async () => {
+    const ok = await copyToClipboard(text);
+    setState(ok ? "copied" : "error");
+    if (!ok) toast.error("Couldn't copy to clipboard");
+    setTimeout(() => setState("idle"), 1200);
+  };
+  return (
+    <code
+      onClick={handle}
+      title={state === "copied" ? "Copied!" : "Click to copy"}
+      className={`cursor-pointer rounded px-1.5 py-0.5 font-mono text-[0.85em] transition-colors ${
+        state === "copied"
+          ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+          : state === "error"
+          ? "bg-destructive/20 text-destructive"
+          : "bg-gradient-to-r from-fuchsia-500/15 to-sky-500/15 text-foreground hover:from-fuchsia-500/25 hover:to-sky-500/25"
+      }`}
+    >
+      {children}
+    </code>
+  );
+}
+
 function CodeBlock({ inline, className, children }: any) {
-  const [copied, setCopied] = useState(false);
+  const [state, setState] = useState<CopyState>("idle");
   const text = String(children).replace(/\n$/, "");
   const lang = /language-(\w+)/.exec(className || "")?.[1];
 
-  if (inline) {
-    return (
-      <code className="rounded bg-gradient-to-r from-fuchsia-500/15 to-sky-500/15 px-1.5 py-0.5 font-mono text-[0.85em] text-foreground">
-        {children}
-      </code>
-    );
-  }
+  if (inline) return <InlineCode>{children}</InlineCode>;
+
+  const handle = async () => {
+    const ok = await copyToClipboard(text);
+    setState(ok ? "copied" : "error");
+    if (!ok) toast.error("Couldn't copy to clipboard");
+    setTimeout(() => setState("idle"), 1500);
+  };
 
   return (
-    <div className="group relative my-3 overflow-hidden rounded-xl border border-border bg-[#0b1020] shadow-soft">
-      <div className="flex items-center justify-between border-b border-white/10 px-3 py-1.5">
-        <span className="font-mono text-[10px] uppercase tracking-widest text-white/50">
+    <div className="group relative my-3 overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-[#1a1033] via-[#0f1228] to-[#0b1020] shadow-soft">
+      <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.03] px-3 py-1.5">
+        <span className="font-mono text-[10px] uppercase tracking-widest text-white/60">
           {lang || "code"}
         </span>
         <button
-          onClick={() => {
-            navigator.clipboard.writeText(text);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
-          }}
-          className="flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] text-white/60 hover:bg-white/10 hover:text-white"
+          type="button"
+          onClick={handle}
+          className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] transition-colors ${
+            state === "copied"
+              ? "text-emerald-300"
+              : state === "error"
+              ? "text-rose-300"
+              : "text-white/60 hover:bg-white/10 hover:text-white"
+          }`}
         >
-          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-          {copied ? "Copied" : "Copy"}
+          {state === "copied" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          {state === "copied" ? "Copied" : state === "error" ? "Failed" : "Copy"}
         </button>
       </div>
       <pre className="overflow-x-auto p-3 text-xs leading-relaxed text-white/90">
@@ -71,14 +123,28 @@ function CodeBlock({ inline, className, children }: any) {
   );
 }
 
+function MdLink({ href, children }: any) {
+  const external = /^https?:\/\//i.test(href || "");
+  return (
+    <a
+      href={href}
+      {...(external ? { target: "_blank", rel: "noopener noreferrer nofollow" } : {})}
+      className="bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 bg-clip-text font-medium text-transparent underline decoration-rose-400/40 decoration-1 underline-offset-2 transition-all hover:decoration-rose-400"
+    >
+      {children}
+    </a>
+  );
+}
+
 function Markdown({ children }: { children: string }) {
   return (
-    <div className="prose prose-sm max-w-none prose-headings:font-display prose-headings:tracking-tight prose-p:my-2 prose-p:leading-relaxed prose-li:my-0.5 prose-a:text-brand prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-blockquote:border-l-brand prose-blockquote:bg-brand/5 prose-blockquote:py-1 prose-blockquote:not-italic prose-hr:border-border prose-table:text-xs">
+    <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-p:my-2 prose-p:leading-relaxed prose-li:my-0.5 prose-strong:text-foreground prose-blockquote:border-l-rose-400 prose-blockquote:bg-gradient-to-r prose-blockquote:from-fuchsia-500/5 prose-blockquote:to-amber-500/5 prose-blockquote:py-1 prose-blockquote:not-italic prose-hr:border-border prose-table:text-xs prose-th:border-border prose-td:border-border">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           code: CodeBlock as any,
           pre: ({ children }) => <>{children}</>,
+          a: MdLink,
         }}
       >
         {children}
@@ -86,6 +152,7 @@ function Markdown({ children }: { children: string }) {
     </div>
   );
 }
+
 
 function AIPage() {
   const { user, session } = useAuth();
