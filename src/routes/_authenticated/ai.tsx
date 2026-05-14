@@ -1,12 +1,42 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "../../hooks/use-auth";
 import { assignments, courses, suggestedPrompts } from "../../data/mock";
-import { Sparkles, Send, Trash2, Copy, Check, User } from "lucide-react";
+import { Sparkles, Send, Trash2, Copy, Check, User, ExternalLink, ClipboardCopy } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const SAFE_PROTOCOLS = ["http:", "https:", "mailto:", "tel:"];
+function sanitizeHref(href: string | undefined): string | null {
+  if (!href) return null;
+  try {
+    const u = new URL(href, window.location.origin);
+    return SAFE_PROTOCOLS.includes(u.protocol) ? u.toString() : null;
+  } catch {
+    if (href.startsWith("/") || href.startsWith("#")) return href;
+    return null;
+  }
+}
+
+function extractCodeBlocks(md: string): string[] {
+  const blocks: string[] = [];
+  const re = /```[^\n]*\n([\s\S]*?)```/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(md)) !== null) blocks.push(m[1].replace(/\n$/, ""));
+  return blocks;
+}
 
 export const Route = createFileRoute("/_authenticated/ai")({
   head: () => ({
