@@ -361,6 +361,12 @@ function AIPage() {
           }
         }
       }
+      // Final flush to ensure last delta is rendered
+      setMessages((m) => {
+        const copy = [...m];
+        copy[copy.length - 1] = { role: "assistant", content: assistant };
+        return copy;
+      });
       if (assistant) persist("assistant", assistant);
     } catch (e) {
       console.error(e);
