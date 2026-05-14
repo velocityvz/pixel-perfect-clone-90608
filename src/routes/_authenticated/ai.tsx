@@ -156,10 +156,23 @@ function CodeBlock({ inline, className, children }: any) {
 }
 
 function MdLink({ href, children }: any) {
-  const external = /^https?:\/\//i.test(href || "");
+  const safe = sanitizeHref(href);
+  const external = !!safe && /^https?:\/\//i.test(safe);
+  const onClick = (e: React.MouseEvent) => {
+    if (!safe) {
+      e.preventDefault();
+      toast.error("Blocked unsafe link");
+      return;
+    }
+    if (external) {
+      e.preventDefault();
+      window.dispatchEvent(new CustomEvent("cluck:open-link", { detail: safe }));
+    }
+  };
   return (
     <a
-      href={href}
+      href={safe ?? "#"}
+      onClick={onClick}
       {...(external ? { target: "_blank", rel: "noopener noreferrer nofollow" } : {})}
       className="bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 bg-clip-text font-medium text-transparent underline decoration-rose-400/40 decoration-1 underline-offset-2 transition-all hover:decoration-rose-400"
     >
@@ -168,7 +181,7 @@ function MdLink({ href, children }: any) {
   );
 }
 
-function Markdown({ children }: { children: string }) {
+const Markdown = memo(function Markdown({ children }: { children: string }) {
   return (
     <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-p:my-2 prose-p:leading-relaxed prose-li:my-0.5 prose-strong:text-foreground prose-blockquote:border-l-rose-400 prose-blockquote:bg-gradient-to-r prose-blockquote:from-fuchsia-500/5 prose-blockquote:to-amber-500/5 prose-blockquote:py-1 prose-blockquote:not-italic prose-hr:border-border prose-table:text-xs prose-th:border-border prose-td:border-border">
       <ReactMarkdown
@@ -181,6 +194,42 @@ function Markdown({ children }: { children: string }) {
       >
         {children}
       </ReactMarkdown>
+    </div>
+  );
+});
+
+function AssistantMessage({ content }: { content: string }) {
+  const [state, setState] = useState<CopyState>("idle");
+  const blocks = useMemo(() => extractCodeBlocks(content), [content]);
+  const handleCopyAll = async () => {
+    if (!blocks.length) return;
+    const ok = await copyToClipboard(blocks.join("\n\n"));
+    setState(ok ? "copied" : "error");
+    if (ok) toast.success(`Copied ${blocks.length} code block${blocks.length === 1 ? "" : "s"}`);
+    else toast.error("Couldn't copy to clipboard");
+    setTimeout(() => setState("idle"), 1500);
+  };
+  return (
+    <div>
+      {blocks.length > 0 && (
+        <div className="mb-1 flex justify-end">
+          <button
+            type="button"
+            onClick={handleCopyAll}
+            className={`flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] transition-colors ${
+              state === "copied"
+                ? "text-emerald-500"
+                : state === "error"
+                ? "text-destructive"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {state === "copied" ? <Check className="h-3 w-3" /> : <ClipboardCopy className="h-3 w-3" />}
+            {state === "copied" ? "Copied" : `Copy all code (${blocks.length})`}
+          </button>
+        </div>
+      )}
+      <Markdown>{content}</Markdown>
     </div>
   );
 }
