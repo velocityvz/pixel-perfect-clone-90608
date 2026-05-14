@@ -319,6 +319,22 @@ function AIPage() {
       let assistant = "";
       setMessages((m) => [...m, { role: "assistant", content: "" }]);
 
+      let rafScheduled = false;
+      const flush = () => {
+        rafScheduled = false;
+        const snapshot = assistant;
+        setMessages((m) => {
+          const copy = [...m];
+          copy[copy.length - 1] = { role: "assistant", content: snapshot };
+          return copy;
+        });
+      };
+      const scheduleFlush = () => {
+        if (rafScheduled) return;
+        rafScheduled = true;
+        requestAnimationFrame(flush);
+      };
+
       let done = false;
       while (!done) {
         const { value, done: d } = await reader.read();
@@ -337,11 +353,7 @@ function AIPage() {
             const delta = parsed.choices?.[0]?.delta?.content;
             if (delta) {
               assistant += delta;
-              setMessages((m) => {
-                const copy = [...m];
-                copy[copy.length - 1] = { role: "assistant", content: assistant };
-                return copy;
-              });
+              scheduleFlush();
             }
           } catch {
             buf = line + "\n" + buf;
