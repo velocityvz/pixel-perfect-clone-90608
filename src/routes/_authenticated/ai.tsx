@@ -512,6 +512,33 @@ function AIPage() {
       <p className="mt-2 text-center text-[11px] text-muted-foreground">
         Cluck can make mistakes. Double-check important info.
       </p>
+
+      <AlertDialog open={!!pendingLink} onOpenChange={(o) => !o && setPendingLink(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <ExternalLink className="h-4 w-4" /> Leaving Cluck
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You're about to open an external link. Only continue if you trust the destination.
+              <span className="mt-2 block break-all rounded-md border border-border bg-muted/50 p-2 font-mono text-xs text-foreground">
+                {pendingLink}
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingLink) window.open(pendingLink, "_blank", "noopener,noreferrer");
+                setPendingLink(null);
+              }}
+            >
+              Open link
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
