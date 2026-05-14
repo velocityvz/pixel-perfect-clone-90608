@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "../../hooks/use-auth";
 import { assignments, courses, suggestedPrompts } from "../../data/mock";
-import { Sparkles, Send, Trash2 } from "lucide-react";
+import { Sparkles, Send, Trash2, Copy, Check, User } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/ai")({
@@ -31,6 +33,60 @@ function buildContext() {
   return `UPCOMING ASSIGNMENTS:\n${upcoming}\n\nCOURSES & GRADES:\n${grades}`;
 }
 
+function CodeBlock({ inline, className, children }: any) {
+  const [copied, setCopied] = useState(false);
+  const text = String(children).replace(/\n$/, "");
+  const lang = /language-(\w+)/.exec(className || "")?.[1];
+
+  if (inline) {
+    return (
+      <code className="rounded bg-gradient-to-r from-fuchsia-500/15 to-sky-500/15 px-1.5 py-0.5 font-mono text-[0.85em] text-foreground">
+        {children}
+      </code>
+    );
+  }
+
+  return (
+    <div className="group relative my-3 overflow-hidden rounded-xl border border-border bg-[#0b1020] shadow-soft">
+      <div className="flex items-center justify-between border-b border-white/10 px-3 py-1.5">
+        <span className="font-mono text-[10px] uppercase tracking-widest text-white/50">
+          {lang || "code"}
+        </span>
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(text);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          }}
+          className="flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] text-white/60 hover:bg-white/10 hover:text-white"
+        >
+          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+      <pre className="overflow-x-auto p-3 text-xs leading-relaxed text-white/90">
+        <code className={className}>{children}</code>
+      </pre>
+    </div>
+  );
+}
+
+function Markdown({ children }: { children: string }) {
+  return (
+    <div className="prose prose-sm max-w-none prose-headings:font-display prose-headings:tracking-tight prose-p:my-2 prose-p:leading-relaxed prose-li:my-0.5 prose-a:text-brand prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-blockquote:border-l-brand prose-blockquote:bg-brand/5 prose-blockquote:py-1 prose-blockquote:not-italic prose-hr:border-border prose-table:text-xs">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          code: CodeBlock as any,
+          pre: ({ children }) => <>{children}</>,
+        }}
+      >
+        {children}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
 function AIPage() {
   const { user, session } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -38,8 +94,8 @@ function AIPage() {
   const [streaming, setStreaming] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const taRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load history
   useEffect(() => {
     if (!user) return;
     supabase
@@ -57,6 +113,13 @@ function AIPage() {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streaming]);
+
+  useEffect(() => {
+    const ta = taRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = Math.min(ta.scrollHeight, 200) + "px";
+  }, [input]);
 
   const persist = async (role: "user" | "assistant", content: string) => {
     if (!user) return;
@@ -147,14 +210,20 @@ function AIPage() {
     }
   };
 
+  const greeting = user?.email?.split("@")[0] ?? "there";
+
   return (
-    <div className="mx-auto flex h-[calc(100vh-4rem)] max-w-3xl flex-col px-6 pt-6 pb-4">
-      <div className="mb-4 flex items-end justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5" /> AI Sidekick
+    <div className="relative mx-auto flex h-[calc(100vh-4rem)] max-w-3xl flex-col px-4 pt-6 pb-4 sm:px-6">
+      {/* Header */}
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 via-rose-500 to-amber-400 shadow-[0_0_24px_-4px_rgb(244_114_182/0.6)]">
+            <Sparkles className="h-4 w-4 text-white" />
           </div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">Cluck</h1>
+          <div>
+            <h1 className="font-display text-xl leading-none tracking-tight">Cluck AI</h1>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">Your study sidekick</p>
+          </div>
         </div>
         {messages.length > 0 && (
           <button
@@ -166,31 +235,51 @@ function AIPage() {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-soft">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto pr-1">
         {!loaded ? (
           <div className="flex h-full items-center justify-center">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
           </div>
         ) : messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
-            <Sparkles className="mb-3 h-8 w-8 text-brand" />
-            <h2 className="font-display text-2xl font-semibold">Ready when you are.</h2>
-            <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-              I know your assignments and grades. Ask me to plan your week, summarize, or quiz you.
+            <h2 className="bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 bg-clip-text font-display text-4xl font-semibold text-transparent sm:text-5xl">
+              Hello, {greeting}.
+            </h2>
+            <p className="mt-2 font-display text-2xl text-muted-foreground sm:text-3xl">
+              How can I help you today?
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6 pb-2">
             {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div key={i} className="flex gap-3">
                 <div
-                  className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
                     m.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-br-sm"
-                      : "bg-muted text-foreground rounded-bl-sm"
+                      ? "bg-secondary text-secondary-foreground"
+                      : "bg-gradient-to-br from-fuchsia-500 via-rose-500 to-amber-400 text-white shadow-[0_0_18px_-4px_rgb(244_114_182/0.6)]"
                   }`}
                 >
-                  {m.content || (streaming && i === messages.length - 1 ? "…" : "")}
+                  {m.role === "user" ? <User className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                </div>
+                <div className="min-w-0 flex-1 pt-0.5">
+                  <div className="mb-1 text-xs font-medium text-muted-foreground">
+                    {m.role === "user" ? "You" : "Cluck"}
+                  </div>
+                  {m.role === "assistant" ? (
+                    m.content ? (
+                      <Markdown>{m.content}</Markdown>
+                    ) : (
+                      <div className="flex gap-1 pt-2">
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-fuchsia-500 [animation-delay:-0.3s]" />
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-rose-500 [animation-delay:-0.15s]" />
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-amber-500" />
+                      </div>
+                    )
+                  ) : (
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{m.content}</p>
+                  )}
                 </div>
               </div>
             ))}
@@ -200,38 +289,53 @@ function AIPage() {
       </div>
 
       {messages.length === 0 && loaded && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {suggestedPrompts.map((p) => (
+        <div className="mb-3 grid gap-2 sm:grid-cols-2">
+          {suggestedPrompts.slice(0, 4).map((p) => (
             <button
               key={p}
               onClick={() => send(p)}
-              className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="group relative overflow-hidden rounded-2xl border border-border bg-card p-3 text-left text-sm text-foreground transition-all hover:-translate-y-0.5 hover:border-transparent hover:shadow-card"
             >
+              <span className="absolute inset-0 -z-10 bg-gradient-to-br from-fuchsia-500/0 via-rose-500/0 to-amber-400/0 opacity-0 transition-opacity group-hover:from-fuchsia-500/10 group-hover:via-rose-500/10 group-hover:to-amber-400/10 group-hover:opacity-100" />
               {p}
             </button>
           ))}
         </div>
       )}
 
+      {/* Input */}
       <form
         onSubmit={(e) => { e.preventDefault(); send(input); }}
-        className="mt-3 flex items-center gap-2 rounded-full border border-border bg-card p-1.5 pl-5 shadow-soft focus-within:ring-2 focus-within:ring-ring/40"
+        className="relative rounded-3xl p-[1.5px] shadow-soft focus-within:bg-gradient-to-r focus-within:from-fuchsia-500 focus-within:via-rose-500 focus-within:to-amber-400"
       >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask anything…"
-          disabled={streaming}
-          className="flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
-        />
-        <button
-          type="submit"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-brand-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
-          disabled={!input.trim() || streaming}
-        >
-          <Send className="h-4 w-4" />
-        </button>
+        <div className="flex items-end gap-2 rounded-[calc(1.5rem-1px)] border border-border bg-card px-4 py-2">
+          <textarea
+            ref={taRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                send(input);
+              }
+            }}
+            rows={1}
+            placeholder="Ask Cluck anything…"
+            disabled={streaming}
+            className="flex-1 resize-none bg-transparent py-2 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
+          />
+          <button
+            type="submit"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 via-rose-500 to-amber-400 text-white shadow-[0_0_18px_-4px_rgb(244_114_182/0.6)] transition-transform hover:scale-105 disabled:scale-100 disabled:opacity-40"
+            disabled={!input.trim() || streaming}
+          >
+            <Send className="h-4 w-4" />
+          </button>
+        </div>
       </form>
+      <p className="mt-2 text-center text-[11px] text-muted-foreground">
+        Cluck can make mistakes. Double-check important info.
+      </p>
     </div>
   );
 }
