@@ -417,7 +417,7 @@ function AIPage() {
                   </div>
                   {m.role === "assistant" ? (
                     m.content ? (
-                      <Markdown>{m.content}</Markdown>
+                      <AssistantMessage content={m.content} />
                     ) : (
                       <div className="flex gap-1 pt-2">
                         <span className="h-2 w-2 animate-bounce rounded-full bg-fuchsia-500 [animation-delay:-0.3s]" />
