@@ -122,7 +122,8 @@ function CodeBlock({ inline, className, children }: any) {
   const handle = async () => {
     const ok = await copyToClipboard(text);
     setState(ok ? "copied" : "error");
-    if (!ok) toast.error("Couldn't copy to clipboard");
+    if (ok) toast.success("Code copied");
+    else toast.error("Couldn't copy to clipboard");
     setTimeout(() => setState("idle"), 1500);
   };
 
