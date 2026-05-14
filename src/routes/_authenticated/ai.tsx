@@ -1,12 +1,42 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "../../hooks/use-auth";
 import { assignments, courses, suggestedPrompts } from "../../data/mock";
-import { Sparkles, Send, Trash2, Copy, Check, User } from "lucide-react";
+import { Sparkles, Send, Trash2, Copy, Check, User, ExternalLink, ClipboardCopy } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const SAFE_PROTOCOLS = ["http:", "https:", "mailto:", "tel:"];
+function sanitizeHref(href: string | undefined): string | null {
+  if (!href) return null;
+  try {
+    const u = new URL(href, window.location.origin);
+    return SAFE_PROTOCOLS.includes(u.protocol) ? u.toString() : null;
+  } catch {
+    if (href.startsWith("/") || href.startsWith("#")) return href;
+    return null;
+  }
+}
+
+function extractCodeBlocks(md: string): string[] {
+  const blocks: string[] = [];
+  const re = /```[^\n]*\n([\s\S]*?)```/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(md)) !== null) blocks.push(m[1].replace(/\n$/, ""));
+  return blocks;
+}
 
 export const Route = createFileRoute("/_authenticated/ai")({
   head: () => ({
@@ -61,7 +91,8 @@ function InlineCode({ children }: { children: React.ReactNode }) {
   const handle = async () => {
     const ok = await copyToClipboard(text);
     setState(ok ? "copied" : "error");
-    if (!ok) toast.error("Couldn't copy to clipboard");
+    if (ok) toast.success("Copied to clipboard");
+    else toast.error("Couldn't copy to clipboard");
     setTimeout(() => setState("idle"), 1200);
   };
   return (
@@ -91,7 +122,8 @@ function CodeBlock({ inline, className, children }: any) {
   const handle = async () => {
     const ok = await copyToClipboard(text);
     setState(ok ? "copied" : "error");
-    if (!ok) toast.error("Couldn't copy to clipboard");
+    if (ok) toast.success("Code copied");
+    else toast.error("Couldn't copy to clipboard");
     setTimeout(() => setState("idle"), 1500);
   };
 
@@ -124,10 +156,23 @@ function CodeBlock({ inline, className, children }: any) {
 }
 
 function MdLink({ href, children }: any) {
-  const external = /^https?:\/\//i.test(href || "");
+  const safe = sanitizeHref(href);
+  const external = !!safe && /^https?:\/\//i.test(safe);
+  const onClick = (e: React.MouseEvent) => {
+    if (!safe) {
+      e.preventDefault();
+      toast.error("Blocked unsafe link");
+      return;
+    }
+    if (external) {
+      e.preventDefault();
+      window.dispatchEvent(new CustomEvent("cluck:open-link", { detail: safe }));
+    }
+  };
   return (
     <a
-      href={href}
+      href={safe ?? "#"}
+      onClick={onClick}
       {...(external ? { target: "_blank", rel: "noopener noreferrer nofollow" } : {})}
       className="bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 bg-clip-text font-medium text-transparent underline decoration-rose-400/40 decoration-1 underline-offset-2 transition-all hover:decoration-rose-400"
     >
@@ -136,7 +181,7 @@ function MdLink({ href, children }: any) {
   );
 }
 
-function Markdown({ children }: { children: string }) {
+const Markdown = memo(function Markdown({ children }: { children: string }) {
   return (
     <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-p:my-2 prose-p:leading-relaxed prose-li:my-0.5 prose-strong:text-foreground prose-blockquote:border-l-rose-400 prose-blockquote:bg-gradient-to-r prose-blockquote:from-fuchsia-500/5 prose-blockquote:to-amber-500/5 prose-blockquote:py-1 prose-blockquote:not-italic prose-hr:border-border prose-table:text-xs prose-th:border-border prose-td:border-border">
       <ReactMarkdown
@@ -151,6 +196,42 @@ function Markdown({ children }: { children: string }) {
       </ReactMarkdown>
     </div>
   );
+});
+
+function AssistantMessage({ content }: { content: string }) {
+  const [state, setState] = useState<CopyState>("idle");
+  const blocks = useMemo(() => extractCodeBlocks(content), [content]);
+  const handleCopyAll = async () => {
+    if (!blocks.length) return;
+    const ok = await copyToClipboard(blocks.join("\n\n"));
+    setState(ok ? "copied" : "error");
+    if (ok) toast.success(`Copied ${blocks.length} code block${blocks.length === 1 ? "" : "s"}`);
+    else toast.error("Couldn't copy to clipboard");
+    setTimeout(() => setState("idle"), 1500);
+  };
+  return (
+    <div>
+      {blocks.length > 0 && (
+        <div className="mb-1 flex justify-end">
+          <button
+            type="button"
+            onClick={handleCopyAll}
+            className={`flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] transition-colors ${
+              state === "copied"
+                ? "text-emerald-500"
+                : state === "error"
+                ? "text-destructive"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {state === "copied" ? <Check className="h-3 w-3" /> : <ClipboardCopy className="h-3 w-3" />}
+            {state === "copied" ? "Copied" : `Copy all code (${blocks.length})`}
+          </button>
+        </div>
+      )}
+      <Markdown>{content}</Markdown>
+    </div>
+  );
 }
 
 
@@ -162,6 +243,16 @@ function AIPage() {
   const [loaded, setLoaded] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const [pendingLink, setPendingLink] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const url = (e as CustomEvent<string>).detail;
+      if (typeof url === "string") setPendingLink(url);
+    };
+    window.addEventListener("cluck:open-link", handler);
+    return () => window.removeEventListener("cluck:open-link", handler);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -238,6 +329,22 @@ function AIPage() {
       let assistant = "";
       setMessages((m) => [...m, { role: "assistant", content: "" }]);
 
+      let rafScheduled = false;
+      const flush = () => {
+        rafScheduled = false;
+        const snapshot = assistant;
+        setMessages((m) => {
+          const copy = [...m];
+          copy[copy.length - 1] = { role: "assistant", content: snapshot };
+          return copy;
+        });
+      };
+      const scheduleFlush = () => {
+        if (rafScheduled) return;
+        rafScheduled = true;
+        requestAnimationFrame(flush);
+      };
+
       let done = false;
       while (!done) {
         const { value, done: d } = await reader.read();
@@ -256,11 +363,7 @@ function AIPage() {
             const delta = parsed.choices?.[0]?.delta?.content;
             if (delta) {
               assistant += delta;
-              setMessages((m) => {
-                const copy = [...m];
-                copy[copy.length - 1] = { role: "assistant", content: assistant };
-                return copy;
-              });
+              scheduleFlush();
             }
           } catch {
             buf = line + "\n" + buf;
@@ -268,6 +371,12 @@ function AIPage() {
           }
         }
       }
+      // Final flush to ensure last delta is rendered
+      setMessages((m) => {
+        const copy = [...m];
+        copy[copy.length - 1] = { role: "assistant", content: assistant };
+        return copy;
+      });
       if (assistant) persist("assistant", assistant);
     } catch (e) {
       console.error(e);
@@ -336,7 +445,7 @@ function AIPage() {
                   </div>
                   {m.role === "assistant" ? (
                     m.content ? (
-                      <Markdown>{m.content}</Markdown>
+                      <AssistantMessage content={m.content} />
                     ) : (
                       <div className="flex gap-1 pt-2">
                         <span className="h-2 w-2 animate-bounce rounded-full bg-fuchsia-500 [animation-delay:-0.3s]" />
@@ -403,6 +512,33 @@ function AIPage() {
       <p className="mt-2 text-center text-[11px] text-muted-foreground">
         Cluck can make mistakes. Double-check important info.
       </p>
+
+      <AlertDialog open={!!pendingLink} onOpenChange={(o) => !o && setPendingLink(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <ExternalLink className="h-4 w-4" /> Leaving Cluck
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You're about to open an external link. Only continue if you trust the destination.
+              <span className="mt-2 block break-all rounded-md border border-border bg-muted/50 p-2 font-mono text-xs text-foreground">
+                {pendingLink}
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingLink) window.open(pendingLink, "_blank", "noopener,noreferrer");
+                setPendingLink(null);
+              }}
+            >
+              Open link
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
