@@ -243,6 +243,16 @@ function AIPage() {
   const [loaded, setLoaded] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const [pendingLink, setPendingLink] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const url = (e as CustomEvent<string>).detail;
+      if (typeof url === "string") setPendingLink(url);
+    };
+    window.addEventListener("cluck:open-link", handler);
+    return () => window.removeEventListener("cluck:open-link", handler);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
